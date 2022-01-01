@@ -21,15 +21,20 @@ const wss = new WebSocketServer({server});
 
 const sockets = [];
 
-function onSocketMessage(message){
-    sockets.forEach(aSocket => aSocket.send(message.toString()));
-    console.log(message.toString())
-}
-
 wss.on("connection",(socket) => {
     sockets.push(socket);
-    socket.send("hello");
-    socket.on("message",onSocketMessage)
+    socket["nickname"] = "Anon";
+    socket.on("message",(message)=>{
+        const parsed = JSON.parse(message);
+        switch(parsed.type){
+            case "msg":
+                sockets.forEach(aSocket => aSocket.send(`${socket["nickname"]}:${parsed.payload}`));
+                break
+            case "nickname":
+                socket["nickname"] = parsed.payload;
+                break
+        }
+    })
     socket.on("close",() => console.log("Disconnected"));
 })
 
