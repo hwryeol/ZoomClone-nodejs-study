@@ -1,36 +1,35 @@
-const socket = new WebSocket(`ws://${window.location.host}`)
-const ul = document.querySelector("ul");
-const msg = document.querySelector("#msg");
-const nick = document.querySelector("#nick")
+const socket = io();
 
-function makeMessage(type,payload){
-    const msg = {type, payload};
-    return JSON.stringify(msg);
+const welcome = document.getElementById("welcome")
+const form =  welcome.querySelector("form");
+
+const room = document.getElementById("room")
+
+room.hidden = true
+
+let roomName = ""
+
+function addMessage(message){
+    const ul = room.querySelector("ul");
+    const li = document.createElement("li");
+    li.innerText = message
+    ul.appendChild(li)
 }
-socket.addEventListener("open",(event) => {
-    console.log("Connected to browser");
-})
-socket.addEventListener("message",(message) => {
-    const li = document.createElement("li")
-    li.innerText = message.data
-    ul.append(li)
-})
+function showRoom(){
+    welcome.hidden = true;
+    room.hidden = false;
+    const h3 = room.querySelector("h3");
+    h3.innerText = `Room ${roomName}`
+}
 
-function handleMsgSubmit(event){
+form.addEventListener("submit",(event)=>{
     event.preventDefault();
-    const input = msg.querySelector("input")
-    const type = "msg"
-    const payload = input.value
-    socket.send(makeMessage(type,payload))
-    input.value = "";
-}
+    const input = form.querySelector("input");
+    roomName = input.value;
+    socket.emit("room",roomName,showRoom);
+    input.value = ""
+});
 
-function handleNickSubmit(event){
-    event.preventDefault();
-    const input = nick.querySelector("input")
-    const type = "nickname"
-    const payload = input.value
-    socket.send(makeMessage(type,payload))
-}
-msg.addEventListener("submit", handleMsgSubmit);
-nick.addEventListener("submit",handleNickSubmit);
+socket.on("welcome",()=>{
+    addMessage("hello");
+})

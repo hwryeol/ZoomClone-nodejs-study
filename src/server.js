@@ -1,8 +1,7 @@
 import express from"express";
-import { WebSocketServer } from 'ws';
 import http from "http"
 import path from "path"
-
+import {Server} from "socket.io";
 const __dirname = path.resolve();
 
 const app = express();
@@ -17,26 +16,22 @@ app.get("/*",(_,res) => res.redirect("/"));
 const handleListen = () => console.log("Listening on http://localhost:3000");
 
 const server = http.createServer(app);
-const wss = new WebSocketServer({server});
-
+const io = new Server(server);
 const sockets = [];
 
-wss.on("connection",(socket) => {
-    sockets.push(socket);
-    socket["nickname"] = "Anon";
-    socket.on("message",(message)=>{
-        const parsed = JSON.parse(message);
-        switch(parsed.type){
-            case "msg":
-                sockets.forEach(aSocket => aSocket.send(`${socket["nickname"]}:${parsed.payload}`));
-                break
-            case "nickname":
-                socket["nickname"] = parsed.payload;
-                break
-        }
+io.on('connection', (socket) => {
+    socket.onAny((event) => {
+        console.log(`Socket Event:${event}`);
     })
-    socket.on("close",() => console.log("Disconnected"));
-})
+    socket.on('room', (roomName,showRoom) => {
+        socket.join(roomName);
+        showRoom();
+        socket.to(roomName).emit("welcome")
+    });
+    socket.on('disconnect', () => {
+      console.log('user disconnected');
+    });
+  });
 
 server.listen(3000,handleListen);
 
