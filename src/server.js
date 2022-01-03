@@ -19,18 +19,54 @@ const server = http.createServer(app);
 const io = new Server(server);
 const sockets = [];
 
-io.on('connection', (socket) => {
-    socket.onAny((event) => {
-        console.log(`Socket Event:${event}`);
+function publicRooms(){
+    const {
+        sockets: {
+            adapter:{sids,rooms},
+        },
+    } = io;
+
+    const publicRooms = [];
+    rooms.forEach((_,key) => {
+        if(sids.get(key) === undefined){
+            publicRooms.push(key);
+        }
     })
+    return publicRooms
+}
+
+io.on('connection', (socket) => {
+    socket["nickname"] = "Anon"
+    socket.emit("openRooms",publicRooms())
+    socket.onAny((event) => {
+        console.log(
+            `Socket Event:${event}`,
+        );
+    })
+
     socket.on('room', (roomName,showRoom) => {
-        socket.join(roomName);
+        socket.join(roomName); 
         showRoom();
-        socket.to(roomName).emit("welcome")
+        const notice = "hello world"
+        socket.emit('notice',notice);
+        socket.to(roomName).emit("printEnterRoomMsg")
+        io.sockets.emit("openRooms",publicRooms())   
+    });
+    
+
+    socket.on('disconnecting', () => {
+        socket.rooms.forEach((room) => socket.to(room).emit("bye"));
     });
     socket.on('disconnect', () => {
-      console.log('user disconnected');
-    });
+        io.sockets.emit("openRooms",publicRooms())
+    })
+
+    socket.on("new_message",(msg,roomName,printMsg) => {
+        socket.to(roomName).emit("new_message",`${socket.nickname}: ${msg}`);
+        printMsg();
+    })
+
+    socket.on("nickname",(nickname) => {socket["nickname"] = nickname})
   });
 
 server.listen(3000,handleListen);
