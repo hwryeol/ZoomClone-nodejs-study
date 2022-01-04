@@ -35,7 +35,13 @@ function publicRooms(){
     return publicRooms
 }
 
+function getRoomUserCount(roomName){
+    return io.sockets.adapter.rooms.get(roomName)?.size;
+}
+
 io.on('connection', (socket) => {
+
+    let roomName = ""
     socket["nickname"] = "Anon"
     socket.emit("openRooms",publicRooms())
     socket.onAny((event) => {
@@ -43,19 +49,25 @@ io.on('connection', (socket) => {
             `Socket Event:${event}`,
         );
     })
-
+    
     socket.on('room', (roomName,showRoom) => {
         socket.join(roomName); 
         showRoom();
         const notice = "hello world"
         socket.emit('notice',notice);
         socket.to(roomName).emit("printEnterRoomMsg")
+        socket.to(roomName).emit("RoomUserCount",getRoomUserCount(roomName))
+        socket.emit("RoomUserCount",getRoomUserCount(roomName))
         io.sockets.emit("openRooms",publicRooms())   
     });
     
 
     socket.on('disconnecting', () => {
-        socket.rooms.forEach((room) => socket.to(room).emit("bye"));
+        socket.rooms.forEach((room) => {
+            socket.to(room).emit("bye")
+            socket.to(roomName).emit("RoomUserCount",getRoomUserCount(room)-1)
+        });
+        
     });
     socket.on('disconnect', () => {
         io.sockets.emit("openRooms",publicRooms())
