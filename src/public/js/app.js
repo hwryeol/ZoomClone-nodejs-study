@@ -56,6 +56,7 @@ roomEnterForm.addEventListener("submit",event=>{
 socket.on("RoomUserCount",(roomCount)=> {
     const h3 = room.querySelector("h3");
     count = roomCount
+    console.log(count)
     h3.innerText = `Room ${roomName}(${count})`
 });
 
@@ -64,20 +65,23 @@ socket.on("printEnterRoomMsg",() => {
 })
 
 socket.on("openRooms", (openRooms) => {
-    const h4 = document.querySelector("#roomEnter")
-    const ul = h4.querySelector("ul");
+    const ul = document.querySelector("#roomEnter ul")
 
-    // if(openRooms.length === 0){
-    //     ul.innerText = "";
-    //     return;
-    // }
-    const li = document.createElement("li");
-    
+    while(ul.hasChildNodes()){
+        ul.removeChild(ul.firstChild);
+    }
     openRooms.forEach(element => {
-        console.log(element)
+        const li = document.createElement("li");
         li.innerText = element
-        ul.appendChild(li)   
-    });
+        ul.appendChild(li)
+    })
+})
+
+const ul = document.querySelector("#roomEnter ul")
+ul.addEventListener("click",(event)=>{
+    roomName = event.target.innerText
+    console.log(roomName)
+    socket.emit("room",roomName,enterRoom)
 })
 socket.on("new_message", (msg) => {addMessage(msg)});
 socket.on("notice",(notice)=>{addMessage(notice)});

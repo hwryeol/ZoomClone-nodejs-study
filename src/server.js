@@ -2,6 +2,8 @@ import express from"express";
 import http from "http"
 import path from "path"
 import {Server} from "socket.io";
+import { instrument } from "@socket.io/admin-ui";
+
 const __dirname = path.resolve();
 
 const app = express();
@@ -16,7 +18,16 @@ app.get("/*",(_,res) => res.redirect("/"));
 const handleListen = () => console.log("Listening on http://localhost:3000");
 
 const server = http.createServer(app);
-const io = new Server(server);
+const io = new Server(server,{
+    cors:{
+        origin: ["https://admin.socket.io"],
+        credentials: true,
+    }});
+
+instrument(io,{
+    auth:false,
+})
+
 const sockets = [];
 
 function publicRooms(){
@@ -58,14 +69,16 @@ io.on('connection', (socket) => {
         socket.to(roomName).emit("printEnterRoomMsg")
         socket.to(roomName).emit("RoomUserCount",getRoomUserCount(roomName))
         socket.emit("RoomUserCount",getRoomUserCount(roomName))
-        io.sockets.emit("openRooms",publicRooms())   
+        io.sockets.emit("openRooms",publicRooms())
+        
     });
     
 
     socket.on('disconnecting', () => {
         socket.rooms.forEach((room) => {
             socket.to(room).emit("bye")
-            socket.to(roomName).emit("RoomUserCount",getRoomUserCount(room)-1)
+            socket.to(room).emit("RoomUserCount",getRoomUserCount(room)-1)
+            console.log(getRoomUserCount(room)-1)
         });
         
     });
