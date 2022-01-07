@@ -60,9 +60,8 @@ io.on('connection', (socket) => {
             `Socket Event:${event}`,
         );
     })
-    socket.on("join_room",(roomName, done) => {
+    socket.on("join_room",(roomName) => {
         socket.join(roomName);
-        done();
         socket.to(roomName).emit("welcome")
     })
     socket.on("offer",(offer,roomName) => {
@@ -103,6 +102,10 @@ io.on('connection', (socket) => {
     })
 
     socket.on("nickname",(nickname) => {socket["nickname"] = nickname})
+
+    socket.on("ice",(ice,roomName) => {
+        socket.to(roomName).emit("ice",ice);
+    })
   });
 
 server.listen(3000,handleListen);
