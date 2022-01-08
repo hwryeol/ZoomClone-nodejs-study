@@ -1,12 +1,18 @@
 import express from"express";
-import http from "http"
+import https from "https"
 import path from "path"
 import {Server} from "socket.io";
 import { instrument } from "@socket.io/admin-ui";
+import fs from "fs";
 
 const __dirname = path.resolve();
 
 const app = express();
+
+const options = {
+    key:fs.readFileSync('./private.pem'),
+    cert: fs.readFileSync("./public.pem"),
+}
 
 app.set("view engine","pug");
 app.set("views",__dirname + "/src/views" );
@@ -15,9 +21,9 @@ app.get("/",(_,res) => res.render("home"));
 app.get("/*",(_,res) => res.redirect("/"));
 
 
-const handleListen = () => console.log("Listening on http://localhost:3000");
+const handleListen = () => console.log("Listening on https://localhost:3000");
 
-const server = http.createServer(app);
+const server = https.createServer(options, app);
 const io = new Server(server,{
     cors:{
         origin: ["https://admin.socket.io"],
