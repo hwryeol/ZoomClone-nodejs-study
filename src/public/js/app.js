@@ -42,11 +42,11 @@ async function getCameras() {
 async function getMedia(deviceId) {
     const initialConstrains = {
       audio: true,
-      video: { facingMode: "user" },
+      video: { facingMode: { exact: "user" }},
     };
     const cameraConstraints = {
-      audio: true,
-      video: { deviceId: { exact: deviceId } },
+      video: { deviceId: { exact: deviceId } }
+
     };
     try {
       myStream = await navigator.mediaDevices.getUserMedia(
@@ -165,10 +165,4 @@ function handleAddStream(data) {
     peerFace.srcObject = data.stream;
   }
 
-
-
-
-
-
-
-getCameras();
+// getCameras();
